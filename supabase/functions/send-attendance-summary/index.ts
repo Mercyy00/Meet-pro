@@ -39,9 +39,16 @@ async function sendEmail(to: string, subject: string, html: string) {
   });
 }
 
+function getRequiredSeconds(m: { scheduled_start: string; scheduled_end?: string | null }): number {
+  if (!m.scheduled_end) return 300;
+  const durationSeconds = (new Date(m.scheduled_end).getTime() - new Date(m.scheduled_start).getTime()) / 1000;
+  return Math.max(durationSeconds * 0.5, 300);
+}
+
 Deno.serve(async (req) => {
   const authHeader = req.headers.get('Authorization');
-  if (authHeader !== `Bearer ${Deno.env.get('SERVICE_ROLE_KEY')}`) {
+  const expectedKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_ROLE_KEY');
+  if (!expectedKey || authHeader !== `Bearer ${expectedKey}`) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -67,12 +74,14 @@ Deno.serve(async (req) => {
 
     const { data: heldMeetings } = await supabase
       .from('meetings')
-      .select('id')
+      .select('id, scheduled_start, scheduled_end')
       .eq('class_id', meeting.class_id)
       .gte('scheduled_start', since.toISOString())
       .lte('scheduled_start', new Date().toISOString());
 
-    const heldIds = (heldMeetings ?? []).map((m) => m.id);
+    const heldList = heldMeetings ?? [];
+    const heldIds = heldList.map((m) => m.id);
+    const meetingMap = new Map(heldList.map((m) => [m.id, m]));
 
     const { data: enrollments } = await supabase
       .from('class_enrollments')
@@ -92,7 +101,10 @@ Deno.serve(async (req) => {
       if (!recipient) continue;
 
       const studentRecords = (records ?? []).filter((r) => r.student_id === enrollment.student_id);
-      const attended = studentRecords.filter((r) => r.total_duration_seconds >= 300).length;
+      const attended = studentRecords.filter((r) => {
+        const m = meetingMap.get(r.meeting_id);
+        return m && r.total_duration_seconds >= getRequiredSeconds(m);
+      }).length;
       const percent = heldIds.length > 0 ? Math.round((attended / heldIds.length) * 100) : 100;
 
       if (percent < threshold) {

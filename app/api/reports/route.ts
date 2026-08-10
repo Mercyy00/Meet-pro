@@ -50,11 +50,9 @@ export async function POST(request: Request) {
   const { students } = await getClassAttendanceSummary(
     supabase,
     classId,
-    new Date(rangeStart)
+    new Date(rangeStart),
+    new Date(rangeEnd)
   );
-  // getClassAttendanceSummary already filters scheduled_start <= now; also
-  // trim anything after rangeEnd since the helper only takes a lower bound.
-  const rangeEndDate = new Date(rangeEnd);
 
   const blob =
     fileType === 'pdf'

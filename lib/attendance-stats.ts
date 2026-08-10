@@ -53,7 +53,8 @@ export type StudentAttendanceSummary = {
 export async function getClassAttendanceSummary(
   supabase: SupabaseClient,
   classId: string,
-  since?: Date
+  since?: Date,
+  until?: Date
 ): Promise<{ meetings: MeetingRow[]; students: StudentAttendanceSummary[] }> {
   let meetingsQuery = supabase
     .from('meetings')
@@ -63,6 +64,11 @@ export async function getClassAttendanceSummary(
     .order('scheduled_start', { ascending: true });
 
   if (since) meetingsQuery = meetingsQuery.gte('scheduled_start', since.toISOString());
+  if (until) {
+    const endOfDay = new Date(until);
+    endOfDay.setHours(23, 59, 59, 999);
+    meetingsQuery = meetingsQuery.lte('scheduled_start', endOfDay.toISOString());
+  }
 
   const { data: meetings } = await meetingsQuery;
   const meetingList = (meetings ?? []) as MeetingRow[];

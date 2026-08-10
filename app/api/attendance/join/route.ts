@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 // Student submits the meeting's internal join code. We look up the meeting,
 // verify the student is enrolled in its class, then upsert an
@@ -14,7 +14,11 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { joinCode } = (await request.json()) as { joinCode: string };
+  const body = await request.json().catch(() => null);
+  const joinCode = body?.joinCode;
+  if (!joinCode || typeof joinCode !== 'string') {
+    return NextResponse.json({ error: 'Join code is required.' }, { status: 400 });
+  }
 
   const { data: meeting, error: meetingError } = await supabase
     .from('meetings')
@@ -72,8 +76,11 @@ export async function POST(request: Request) {
   }
 
   // Mark the meeting live + stamp actual_start on the very first check-in.
+  // Using service role client because normal students do not have UPDATE
+  // permissions on meetings table via RLS.
   if (meeting.status === 'scheduled') {
-    await supabase
+    const serviceRoleClient = createServiceRoleClient();
+    await serviceRoleClient
       .from('meetings')
       .update({ status: 'live', actual_start: now.toISOString() })
       .eq('id', meeting.id)

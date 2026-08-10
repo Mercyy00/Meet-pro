@@ -34,7 +34,7 @@ export default function ClassesPage() {
 
     const studentEmails = emails
       .split(',')
-      .map((e) => e.trim())
+      .map((e) => e.trim().toLowerCase())
       .filter(Boolean);
 
     const res = await fetch('/api/classes', {

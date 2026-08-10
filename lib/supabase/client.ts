@@ -9,7 +9,7 @@ export function createClient() {
   // Defer importing @supabase/ssr until runtime in the browser so that
   // the module is not evaluated during server-side builds where env
   // variables may not be available.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+  // eslint-disable-next-line
   const { createBrowserClient } = require('@supabase/ssr');
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '';

@@ -51,10 +51,11 @@ export async function POST(request: Request) {
 
   // Enroll any students whose emails already have a profile in this institution.
   if (studentEmails && studentEmails.length > 0) {
+    const normalizedEmails = studentEmails.map((e) => e.trim().toLowerCase());
     const { data: students } = await supabase
       .from('profiles')
       .select('id, email')
-      .in('email', studentEmails)
+      .in('email', normalizedEmails)
       .eq('institution_id', profile.institution_id);
 
     if (students && students.length > 0) {

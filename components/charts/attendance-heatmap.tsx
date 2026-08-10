@@ -11,9 +11,9 @@ export default function AttendanceHeatmap({ days }: { days: HeatmapDay[] }) {
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-[repeat(auto-fill,minmax(14px,1fr))] gap-1">
-        {days.map((day) => (
+        {days.map((day, idx) => (
           <div
-            key={day.date}
+            key={`${day.date}-${idx}`}
             title={`${day.date}${day.attended === null ? '' : day.attended ? ' — attended' : ' — missed'}`}
             className={`aspect-square rounded-sm ${colorFor(day)}`}
           />

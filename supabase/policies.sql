@@ -15,9 +15,11 @@ alter table reports enable row level security;
 
 -- Helper: current user's institution_id and role, without recursive RLS
 -- lookups on profiles (security definer avoids infinite recursion).
+-- Explicit search_path prevents schema-hijacking vulnerabilities.
 create or replace function auth_institution_id()
 returns uuid
 language sql security definer stable
+set search_path = public, pg_temp
 as $$
   select institution_id from profiles where id = auth.uid();
 $$;
@@ -25,16 +27,22 @@ $$;
 create or replace function auth_role()
 returns text
 language sql security definer stable
+set search_path = public, pg_temp
 as $$
   select user_role from profiles where id = auth.uid();
 $$;
 
 -- ----------------------------------------------------------------------------
--- institutions: readable by any authenticated member of that institution.
+-- institutions: readable by anyone (needed for student signup lookup by name)
+-- and insertable by anyone during onboarding (teacher signup creates institution).
 -- ----------------------------------------------------------------------------
-create policy "institution members can read their institution"
+create policy "anyone can read institutions"
   on institutions for select
-  using (id = auth_institution_id());
+  using (true);
+
+create policy "anyone can create an institution on signup"
+  on institutions for insert
+  with check (true);
 
 -- ----------------------------------------------------------------------------
 -- profiles

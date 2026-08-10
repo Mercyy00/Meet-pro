@@ -13,7 +13,11 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { meetingId } = (await request.json()) as { meetingId: string };
+  const body = await request.json().catch(() => null);
+  const meetingId = body?.meetingId;
+  if (!meetingId || typeof meetingId !== 'string') {
+    return NextResponse.json({ error: 'Meeting ID is required.' }, { status: 400 });
+  }
   const now = new Date();
 
   const { error } = await supabase

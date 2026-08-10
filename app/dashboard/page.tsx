@@ -97,7 +97,7 @@ export default async function DashboardOverviewPage() {
         <FadeIn delay={0.05}>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground">Today's meetings</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">Today&apos;s meetings</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-semibold">
@@ -124,7 +124,7 @@ export default async function DashboardOverviewPage() {
       <FadeIn delay={0.15}>
         <Card>
           <CardHeader>
-            <CardTitle>Today's meetings</CardTitle>
+            <CardTitle>Today&apos;s meetings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {todaysMeetings && todaysMeetings.length > 0 ? (

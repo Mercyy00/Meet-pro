@@ -56,11 +56,11 @@ export default async function ClassAnalyticsPage({
         )
     : { data: [] };
 
-  const { data: enrollmentCountRow } = await supabase
+  const { count: enrollmentCount } = await supabase
     .from('class_enrollments')
     .select('student_id', { count: 'exact', head: true })
     .eq('class_id', params.id);
-  const enrolledCount = (enrollmentCountRow as any)?.length ?? students.length;
+  const enrolledCount = enrollmentCount ?? students.length;
 
   for (const meeting of meetings) {
     const d = new Date(meeting.scheduled_start);

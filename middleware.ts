@@ -12,16 +12,15 @@ export async function middleware(request: NextRequest) {
     anonKey,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
+        setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          response = NextResponse.next({ request: { headers: request.headers } });
-          response.cookies.set({ name, value: '', ...options });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
         },
       },
     }
@@ -42,6 +41,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthPage && user) {
+    if (
+      request.nextUrl.pathname.startsWith('/signup') &&
+      request.nextUrl.searchParams.get('complete') === '1'
+    ) {
+      return response;
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

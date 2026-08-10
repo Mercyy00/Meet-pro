@@ -17,10 +17,19 @@ export default function SignupPage() {
   const router = useRouter();
   const supabaseRef = useRef<any>(null);
 
+  const [existingUser, setExistingUser] = useState<any>(null);
+
   useEffect(() => {
     // initialize Supabase client only in the browser
     try {
-      supabaseRef.current = createClient();
+      const supabase = createClient();
+      supabaseRef.current = supabase;
+      supabase.auth.getUser().then(({ data }: { data: any }) => {
+        if (data?.user) {
+          setExistingUser(data.user);
+          if (data.user.email) setEmail(data.user.email);
+        }
+      });
     } catch (e) {
       // ignore during prerender/build — handlers will only run in the browser
       // and will rethrow if configuration is missing at runtime
@@ -48,15 +57,20 @@ export default function SignupPage() {
       return;
     }
 
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    let userId = existingUser?.id;
 
-    if (signUpError || !authData.user) {
-      setError(signUpError?.message ?? 'Sign up failed.');
-      setLoading(false);
-      return;
+    if (!userId) {
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (signUpError || !authData.user) {
+        setError(signUpError?.message ?? 'Sign up failed.');
+        setLoading(false);
+        return;
+      }
+      userId = authData.user.id;
     }
 
     let institutionId: string;
@@ -90,7 +104,7 @@ export default function SignupPage() {
     }
 
     const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user.id,
+      id: userId,
       institution_id: institutionId,
       full_name: fullName,
       email,
@@ -129,14 +143,16 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              required
-            />
+            {!existingUser && (
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+            )}
 
             <div className="flex gap-2 text-sm">
               <label className="flex items-center gap-1.5">

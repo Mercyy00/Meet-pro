@@ -11,7 +11,9 @@ const HEARTBEAT_INTERVAL_MS = 30_000;
 
 export default function MeetingJoinPage() {
   const params = useParams<{ id: string }>();
-  const [joinCode, setJoinCode] = useState('');
+  const [joinCode, setJoinCode] = useState(
+    params?.id ? decodeURIComponent(params.id).toUpperCase() : ''
+  );
   const [meetingId, setMeetingId] = useState<string | null>(null);
   const [meetUrl, setMeetUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function MeetingJoinPage() {
             <div className="space-y-3 text-center">
               <Badge variant="success">Attendance tracking active</Badge>
               <p className="text-sm text-muted-foreground">
-                Your Meet tab opened in a new window. Keep this tab open too — it's how we track
+                Your Meet tab opened in a new window. Keep this tab open too — it&apos;s how we track
                 your attendance.
               </p>
               {meetUrl && (
