@@ -85,3 +85,4 @@ Unchanged from the original plan: skip it. It's a heavy model download,
 unreliable on laptop webcams during a live call, and raises privacy/consent
 issues for student-facing software. Only revisit once there's real demand
 for it on top of the working heartbeat-based core.
+# Meet-pro
